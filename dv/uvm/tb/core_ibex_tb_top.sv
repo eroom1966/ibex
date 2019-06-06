@@ -5,6 +5,7 @@
 module core_ibex_tb_top;
 
   import uvm_pkg::*;
+  import core_ibex_test_pkg::*; // added by Simon and Rahul
 
   logic clk;
   logic rst_n;
@@ -69,10 +70,16 @@ module core_ibex_tb_top;
   end
 
   // Generate clk
+  integer count;
   initial begin
     clk = 1'b0;
+    count = 0;
     forever begin
       #10 clk = ~clk;
+      count++;
+      if (count == 100000) begin
+        $finish;
+      end
     end
   end
 

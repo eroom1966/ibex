@@ -98,7 +98,7 @@ if [[ "$SIMULATOR" == "vcs" ]]; then
                    -l $OUT/compile.log  \
                    -Mdir=$OUT/vcs_simv.csrc \
                    -o $OUT/vcs_simv"
-
+  SIM_SEED="+ntb_random_seed=${SEED}"
   SIM_CMD="$OUT/vcs_simv +UVM_TESTNAME="
 
 elif [[ "$SIMULATOR" == "irun" ]]; then
@@ -111,7 +111,21 @@ elif [[ "$SIMULATOR" == "irun" ]]; then
                     -uvmhome CDNS-1.2 \
                     -l ${OUT}/compile.log"
 
+  SIM_SEED="+ntb_random_seed=${SEED}"
   SIM_CMD="irun -R +UVM_TESTNAME="
+
+elif [[ "$SIMULATOR" == "questa" ]]; then
+  # COMPILE_CMD="vlog -64 
+  COMPILE_CMD="vlog  -msglimit all -msglimitcount 2 \
+                    -f ./files.f \
+                    -sv -quiet -mfcu \
+                    -L ${QUESTA_HOME}/uvm-1.2  \
+                    -l ${OUT}/compile.log"
+
+  echo ${COMPILE_CMD}
+  SIM_SEED="-sv_seed ${SEED}"
+  SIM_CMD="vsim riscv_instr_gen_tb_top -msglimit all -msglimitcount 2 -c -quiet -do \"run\" -L ${QUESTA_HOME}/uvm-1.2 +UVM_TESTNAME="
+
 
 else
   echo "unsupported simulator $SIMULATOR"
@@ -149,7 +163,7 @@ if [[ ${TEST} == "all" ]]; then
         echo "Running ${TEST}, iteration count: ${ITERATION}"
         if ! [[ $ITERATION == "0" ]]; then
           ${SIM_CMD}${TEST} +asm_file_name=${OUT}/asm_tests/${TEST} \
-                            +ntb_random_seed=${SEED} \
+                            ${SIM_SEED} \
                             -l ${OUT}/sim_${TEST}.log +num_of_tests=${ITERATION}
         fi
       fi
@@ -157,10 +171,11 @@ if [[ ${TEST} == "all" ]]; then
   done < testlist
 else
   echo "Running test ${TEST} with $SIMULATOR.."
+  echo ${SIM_CMD}
   ${SIM_CMD}${TEST} +asm_file_name=${OUT}/asm_tests/${TEST} \
-                    +ntb_random_seed=${SEED} \
+                    ${SIM_SEED} \
                     -l ${OUT}/sim_${TEST}.log \
-                    +num_of_tests=${NUM_TESTS}
+                    +num_of_tests=${NUM_TESTS} 
 fi
 
 # List all generated assembly tests

@@ -15,7 +15,6 @@ Ibex: User Manual
    performance_counters
    exception_interrupts
    debug
-   rvfi
 
 
 .. toctree::

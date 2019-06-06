@@ -28,23 +28,30 @@ rand:=$(shell awk 'BEGIN{srand();printf("%d", 65536*rand())}')
 
 .PHONY: rtl_sim clean iss_sim
 
-all: clean gen iss_sim compile rtl_sim post_compare
+SIM:=vcs
+SIM:=questa
+COMPILE:=compile_$(SIM)
+
+ISS:=spike
+ISS:=ovpsim
+
+all: clean gen iss_sim $(COMPILE) rtl_sim post_compare
 
 clean:
-	rm -rf ${OUT}
+	rm -rf ${OUT} work
 
 # Generate random instructions
 gen:
 	mkdir -p ${OUT}
-	cd ${GEN_DIR}; ./run -o ${OUT}/instr_gen ${GEN_OPTS};
+	cd ${GEN_DIR}; ./run -tool $(SIM) -o ${OUT}/instr_gen ${GEN_OPTS};
 
 # ISS simulation
 iss_sim:
-	cd ${GEN_DIR}; \
-	./iss_sim -dir ${OUT}/instr_gen -toolchain ${TOOLCHAIN} -isa rv32imc -abi ilp32;
+	cd ${GEN_DIR} && ./iss_sim -iss spike  -dir ${OUT}/instr_gen -toolchain ${TOOLCHAIN} -isa rv32imc -abi ilp32
+	cd ${GEN_DIR} && ./iss_sim -iss ovpsim -dir ${OUT}/instr_gen -toolchain ${TOOLCHAIN} -isa rv32imc -abi ilp32
 
 # Compile ibex core TB
-compile:
+compile_vcs:
 	mkdir -p ${OUT}/rtl_sim
 	vcs -f ibex_dv.f  -full64 \
       -l ${OUT}/rtl_sim/compile.log  \
@@ -58,9 +65,19 @@ compile:
       ${WAVE_CMP_OPTS} \
       -lca -kdb
 
+compile_questa:
+	mkdir -p ${OUT}/rtl_sim
+	vlog -f ibex_dv.f \
+      -sv -mfcu \
+      -L ${QUESTA_HOME}/uvm-1.2  \
+      -l ${OUT}/rtl_sim/compile.log  \
+      +define+UVM_REGEX_NO_DPI -timescale=1ns/10ps \
+      +define+BOOT_ADDR=32\'h8000_0000 \
+      +define+TRACE_EXECUTION
+
 # Run ibex RTL simulation with random instructions
 rtl_sim:
-	./sim ${SIM_OPTS} -dir ${OUT} -waves ${WAVES}
+	./sim -tool $(SIM) ${SIM_OPTS} -dir ${OUT} -waves ${WAVES}
 
 # Compare the regression result between ISS and RTL sim
 post_compare:

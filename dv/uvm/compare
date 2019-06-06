@@ -12,6 +12,7 @@ script_path="../../vendor/google_riscv-dv"
 compare_log () {
   spike_log="$1"
   ibex_log="$2"
+  ovpsim_log="$3"
   # -----------------------------------------------------------------------------
   # Convert spike log to standard instruction trace csv
   # -----------------------------------------------------------------------------
@@ -26,6 +27,18 @@ compare_log () {
          --log $spike_log --csv $spike_csv >> $report_file
 
   # -----------------------------------------------------------------------------
+  # Convert ovpsim log to standard instruction trace csv
+  # -----------------------------------------------------------------------------
+  # Remove the header part of ovpsim log
+  sed -i '/Info 1:/,$!d' "$ovpsim_log"
+  # Remove all instructions after ecall (end of program excecution)
+  sed -i '/ecall/q' "$ovpsim_log"
+  # Convert the spike log to riscv_instr_trace.proto format
+  ovpsim_csv=$(echo "$ovpsim_log" | sed 's/\.log/.csv/g')
+  python $script_path/scripts/ovpsim_log_to_trace_csv.py \
+         --log $ovpsim_log --csv $ovpsim_csv >> $report_file
+
+  # -----------------------------------------------------------------------------
   # Convert ibex log to standard instruction trace csv
   # -----------------------------------------------------------------------------
   # Remove all instructions after ecall (end of program excecution)
@@ -38,8 +51,14 @@ compare_log () {
   # -----------------------------------------------------------------------------
   # Compare the trace log
   # -----------------------------------------------------------------------------
-  python $script_path/scripts/instr_trace_compare.py $spike_csv $ibex_csv \
+  #python $script_path/scripts/instr_trace_compare.py $spike_csv $ibex_csv \
          "spike" "ibex" >> $report_file
+
+  python $script_path/scripts/instr_trace_compare.py $spike_csv $ovpsim_csv \
+         "spike" "ovpsim" >> $report_file
+
+  python $script_path/scripts/instr_trace_compare.py $ibex_csv $ovpsim_csv \
+         "ibex" "ovpsim" >> $report_file
 }
 
 echo "compare simulation result under $RUN_DIR"
@@ -47,7 +66,8 @@ while read asm_test; do
   SRC=$(echo "$asm_test" | sed 's/^.*\///g' | sed 's/\.S>*$//g')
   echo "Test: $asm_test" >> $report_file
   compare_log $RUN_DIR/instr_gen/spike_sim/$SRC.S.o.log \
-              $RUN_DIR/rtl_sim/$SRC/trace_core_00_0.log
+              $RUN_DIR/rtl_sim/$SRC/trace_core_00_0.log \
+              $RUN_DIR/instr_gen/riscv_ovpsim/$SRC.S.o.log
 done <"$RUN_DIR/asm_test_list"
 
 passed_cnt="$(grep -c PASS $report_file)"

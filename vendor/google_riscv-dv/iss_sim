@@ -27,8 +27,10 @@ DATE=`date +%Y-%m-%d`
 ISS="spike" # other options: ovpsim, all
 
 # riscv-ovpsim options
-OVPSIM_VARIANT="RV64GC"
+OVPSIM_VARIANT="RV32GC"
 RISCV_OVPSIM="YOUR_PATH_HERE/riscv-ovpsim/bin/Linux64/riscvOVPsim.exe"
+RISCV_OVPSIM="/home/simond/Imperas/fixedPlatform/riscvOVPsim/bin/Linux64/riscvOVPsim.exe"
+RISCV_OVPSIM="/home/simond/Imperas/fixedPlatform/riscvOVPsim/bin/Linux32/riscvOVPsim.exe"
 
 # Directory of assemble tests
 SRC_DIR="./out_${DATE}/asm_tests"
@@ -87,9 +89,10 @@ esac
 shift
 done
 
-RISCV_GCC="$RISCV_TOOLCHAIN/bin/riscv64-unknown-elf-gcc"
-RISCV_OBJCOPY="$RISCV_TOOLCHAIN/bin/riscv64-unknown-elf-objcopy"
+RISCV_GCC="$RISCV_TOOLCHAIN/bin/${RISCV_PREFIX}-gcc"
+RISCV_OBJCOPY="$RISCV_TOOLCHAIN/bin/${RISCV_PREFIX}-objcopy"
 RISCV_SPIKE="$RISCV_TOOLCHAIN/bin/spike"
+RISCV_SPIKE=/home/riscv/install/bin/spike
 
 mkdir -p "$SRC_DIR"
 
@@ -150,6 +153,7 @@ while read asm_test; do
     echo "Running spike: $TEST_NAME"
     SPIKE_LOG="$SRC_DIR/spike_sim/$TEST_NAME.log"
     SPIKE_CMD="timeout 60s $RISCV_SPIKE --isa=$ISA -l $ELF &> $SPIKE_LOG"
+    # $SPIKE_CMD
     $($SPIKE_CMD &> $SPIKE_LOG)
   fi
   # riscv_ovpsim sim
@@ -161,6 +165,7 @@ while read asm_test; do
                       --override riscvOVPsim/cpu/simulateexceptions=T \
                       --trace --tracechange --traceshowicount --program $ELF \
                       --finishafter 500000"
+    # $RISCV_OVPSIM_CMD
     $($RISCV_OVPSIM_CMD &> $OVPSIM_LOG)
   fi
   if [[ "$ISS" == "all" ]]; then

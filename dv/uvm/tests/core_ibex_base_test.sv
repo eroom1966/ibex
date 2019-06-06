@@ -53,6 +53,7 @@ class core_ibex_base_test extends uvm_test;
     if (!f_bin)
       `uvm_fatal(get_full_name(), $sformatf("Cannot open file %0s", bin))
     while ($fread(r8,f_bin)) begin
+      // $display("Init mem [0x%h] = 0x%0h", addr, r8);
       `uvm_info(`gfn, $sformatf("Init mem [0x%h] = 0x%0h", addr, r8), UVM_FULL)
       mem.write(addr, r8);
       addr++;
