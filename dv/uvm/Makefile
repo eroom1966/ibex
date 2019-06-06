@@ -38,7 +38,7 @@ ISS:=ovpsim
 all: clean gen iss_sim $(COMPILE) rtl_sim post_compare
 
 clean:
-	rm -rf ${OUT} work
+	rm -rf ${OUT} work ${GEN_DIR}/work
 
 # Generate random instructions
 gen:
@@ -48,7 +48,7 @@ gen:
 # ISS simulation
 iss_sim:
 	cd ${GEN_DIR} && ./iss_sim -iss spike  -dir ${OUT}/instr_gen -toolchain ${TOOLCHAIN} -isa rv32imc -abi ilp32
-	cd ${GEN_DIR} && ./iss_sim -iss ovpsim -dir ${OUT}/instr_gen -toolchain ${TOOLCHAIN} -isa rv32imc -abi ilp32
+	cd ${GEN_DIR} && ./iss_sim -iss ovpsim -dir ${OUT}/instr_gen -toolchain ${TOOLCHAIN} -isa rv32imc -abi ilp32 -ovpsim ${RISCV_OVPSIM}
 
 # Compile ibex core TB
 compile_vcs:

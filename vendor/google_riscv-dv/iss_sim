@@ -29,8 +29,6 @@ ISS="spike" # other options: ovpsim, all
 # riscv-ovpsim options
 OVPSIM_VARIANT="RV32GC"
 RISCV_OVPSIM="YOUR_PATH_HERE/riscv-ovpsim/bin/Linux64/riscvOVPsim.exe"
-RISCV_OVPSIM="/home/simond/Imperas/fixedPlatform/riscvOVPsim/bin/Linux64/riscvOVPsim.exe"
-RISCV_OVPSIM="/home/simond/Imperas/fixedPlatform/riscvOVPsim/bin/Linux32/riscvOVPsim.exe"
 
 # Directory of assemble tests
 SRC_DIR="./out_${DATE}/asm_tests"
@@ -59,6 +57,10 @@ case $key in
     ;;
     -toolchain)
     RISCV_TOOLCHAIN="$2"
+    shift
+    ;;
+    -ovpsim)
+    RISCV_OVPSIM="$2"
     shift
     ;;
     -isa)
